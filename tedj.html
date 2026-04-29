@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✨ Play</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pacifico&display=swap');
+
+  :root {
+    --pink: #ff8fab;
+    --lavender: #c8b6e2;
+    --mint: #b5ead7;
+    --yellow: #ffd166;
+    --peach: #ffb347;
+    --soft-bg: #fff0f6;
+    --card-bg: #fff;
+    --text: #4a3f6b;
+    --radius: 18px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--soft-bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ── Animated background bubbles ── */
+  .bg-bubble {
+    position: fixed;
+    border-radius: 50%;
+    opacity: 0.18;
+    animation: float-bubble linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  @keyframes float-bubble {
+    0%   { transform: translateY(110vh) scale(1); opacity: 0; }
+    10%  { opacity: 0.18; }
+    90%  { opacity: 0.18; }
+    100% { transform: translateY(-10vh) scale(1.1); opacity: 0; }
+  }
+
+  /* ── Screens ── */
+  .screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    z-index: 10;
+  }
+  .screen.hidden { opacity: 0; pointer-events: none; transform: scale(0.97); }
+
+  /* ── Landing ── */
+  #landing {
+    background: linear-gradient(160deg, #ffe0ec 0%, #e8d5f5 50%, #d5eef5 100%);
+    text-align: center;
+    padding: 2rem;
+  }
+  #landing .emoji-spin {
+    font-size: 5rem;
+    display: inline-block;
+    animation: spin-soft 4s ease-in-out infinite;
+    margin-bottom: 1rem;
+  }
+  @keyframes spin-soft {
+    0%,100% { transform: rotate(-8deg) scale(1); }
+    50%      { transform: rotate(8deg) scale(1.05); }
+  }
+  #landing h1 {
+    font-family: 'Pacifico', cursive;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 0 rgba(255,143,171,0.3);
+  }
+  #landing p {
+    font-size: 1.1rem;
+    color: #7a6a9b;
+    margin-bottom: 2.5rem;
+    max-width: 340px;
+  }
+  .btn-play {
+    background: linear-gradient(135deg, var(--pink), var(--lavender));
+    color: white;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    padding: 1rem 3rem;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 6px 24px rgba(255,143,171,0.45);
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .btn-play:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255,143,171,0.55); }
+  .btn-play:active { transform: translateY(0); }
+
+  /* easter egg heart */
+  #easter-egg {
+    position: fixed; bottom: 18px; right: 18px;
+    width: 36px; height: 36px;
+    opacity: 0.15;
+    cursor: pointer;
+    font-size: 1.6rem;
+    line-height: 36px;
+    text-align: center;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 999;
+    user-select: none;
+  }
+  #easter-egg:hover { opacity: 1; transform: scale(1.4); }
+  #easter-egg.bloomed { opacity: 1; animation: heartbeat 0.6s ease; }
+  @keyframes heartbeat { 0%,100%{transform:scale(1)} 30%{transform:scale(1.6)} 60%{transform:scale(1.2)} }
+
+  /* ── Game Screen ── */
+  #game-screen {
+    background: linear-gradient(160deg, #fce4ec 0%, #ede7f6 60%, #e0f7fa 100%);
+    padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+  }
+  #game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 520px;
+    padding: 0 0.5rem;
+  }
+  .stat-box {
+    background: rgba(255,255,255,0.7);
+    border-radius: 50px;
+    padding: 0.4rem 1rem;
+    font-weight: 700;
+    color: var(--text);
+    font-size: 0.95rem;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  }
+  #music-btn {
+    background: rgba(255,255,255,0.7);
+    border: none;
+    border-radius: 50%;
+    width: 40px; height: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s;
+  }
+  #music-btn:hover { transform: scale(1.15); }
+
+  /* Card Grid */
+  #card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    max-width: 520px;
+    width: 100%;
+    padding: 0 0.5rem;
+  }
+  @media (max-width: 420px) {
+    #card-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  }
+
+  .card {
+    aspect-ratio: 1;
+    perspective: 600px;
+    cursor: pointer;
+  }
+  .card-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+    border-radius: var(--radius);
+  }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+  .card.matched .card-inner { transform: rotateY(180deg); }
+  .card.matched .card-front {
+    animation: match-pop 0.4s ease;
+    box-shadow: 0 0 20px rgba(255,143,171,0.5);
+  }
+  @keyframes match-pop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.18); }
+    70%  { transform: scale(0.95); }
+    100% { transform: scale(1); }
+  }
+  .card-front, .card-back {
+    position: absolute; inset: 0;
+    border-radius: var(--radius);
+    backface-visibility: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-back {
+    background: linear-gradient(135deg, #c8b6e2, #ff8fab);
+    font-size: 1.6rem;
+    box-shadow: 0 4px 14px rgba(200,182,226,0.4);
+  }
+  .card-back::after {
+    content: '✦';
+    font-size: 1.4rem;
+    color: rgba(255,255,255,0.7);
+  }
+  .card-front {
+    background: white;
+    font-size: 2rem;
+    transform: rotateY(180deg);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+  @media (max-width: 380px) {
+    .card-front { font-size: 1.5rem; }
+    .card-back::after { font-size: 1.1rem; }
+  }
+
+  #game-hint {
+    font-size: 0.9rem;
+    color: #9c88c4;
+    font-weight: 600;
+    max-width: 520px;
+    text-align: center;
+  }
+
+  /* ── Win / Reveal Screen ── */
+  #win-screen {
+    background: linear-gradient(145deg, #1a0533 0%, #2d1068 40%, #1a2560 100%);
+    text-align: center;
+    padding: 2rem;
+    overflow: hidden;
+  }
+  #win-screen .reveal-content {
+    position: relative; z-index: 5;
+    max-width: 500px;
+    animation: reveal-in 0.9s cubic-bezier(0.3,-0.1,0.2,1.3) both;
+  }
+  @keyframes reveal-in {
+    0%   { opacity: 0; transform: scale(0.7) translateY(30px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .stars-row { font-size: 1.8rem; letter-spacing: 4px; margin-bottom: 1.2rem; animation: shimmer 2s infinite; }
+  @keyframes shimmer { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  .aya-name {
+    font-family: 'Pacifico', cursive;
+    font-size: clamp(3.5rem, 12vw, 6rem);
+    background: linear-gradient(90deg, #ff8fab, #ffd166, #b5ead7, #c8b6e2, #ff8fab);
+    background-size: 300% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow-move 3s linear infinite;
+    display: block;
+    line-height: 1.1;
+    margin-bottom: 0.3rem;
+    filter: drop-shadow(0 0 20px rgba(255,143,171,0.5));
+  }
+  @keyframes rainbow-move { to { background-position: 300% center; } }
+
+  .birthday-title {
+    font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+    color: rgba(255,255,255,0.9);
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+  }
+  .age-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--yellow), var(--peach));
+    color: #4a3f6b;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 900;
+    padding: 0.3rem 1.4rem;
+    border-radius: 50px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 20px rgba(255,209,102,0.5);
+    animation: pulse-badge 2s ease infinite;
+  }
+  @keyframes pulse-badge { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+
+  .message-box {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(10px);
+  }
+  #typed-msg {
+    font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+    color: rgba(255,255,255,0.88);
+    line-height: 1.7;
+    font-weight: 600;
+    min-height: 3em;
+  }
+  #typed-msg .cursor {
+    display: inline-block;
+    width: 2px; height: 1em;
+    background: var(--pink);
+    animation: blink 0.8s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .subtext {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.65);
+    font-weight: 600;
+    margin-bottom: 1.8rem;
+  }
+  .floating-emojis {
+    font-size: 1.5rem;
+    letter-spacing: 6px;
+    animation: float-row 3s ease-in-out infinite;
+  }
+  @keyframes float-row { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+  /* ── Confetti ── */
+  .confetti-piece {
+    position: fixed;
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 100;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall {
+    0%   { transform: translateY(-20px) rotate(0deg) scale(1); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg) scale(0.5); opacity: 0; }
+  }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 80px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(255,143,171,0.95);
+    color: white; font-weight: 700;
+    padding: 0.6rem 1.4rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 999;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Glow pulse on win cards ── */
+  .card.matched .card-front { border: 2px solid rgba(255,143,171,0.6); }
+</style>
+</head>
+<body>
+
+<!-- Easter Egg -->
+<div id="easter-egg" title="psst...">🤍</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Background bubbles (injected by JS) -->
+
+<!-- ══════════════════════════════════
+     SCREEN 1: Landing
+════════════════════════════════════ -->
+<div class="screen" id="landing">
+  <div class="emoji-spin">🌸</div>
+  <h1>Memory Bloom</h1>
+  <p>Match all the pairs to win something special ✨</p>
+  <button class="btn-play" id="start-btn">Let's Play!</button>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 2: Game
+════════════════════════════════════ -->
+<div class="screen hidden" id="game-screen">
+  <div id="game-header">
+    <div class="stat-box">🎯 Moves: <span id="moves">0</span></div>
+    <button id="music-btn" title="Toggle music">🎵</button>
+    <div class="stat-box">✅ <span id="matched">0</span>/8</div>
+  </div>
+  <div id="card-grid"></div>
+  <div id="game-hint">Find all 8 matching pairs to win!</div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 3: Win / Reveal
+════════════════════════════════════ -->
+<div class="screen hidden" id="win-screen">
+  <div class="reveal-content">
+    <div class="stars-row">⭐ 🌟 ✨ 🌟 ⭐</div>
+    <span class="aya-name">Aya</span>
+    <div class="birthday-title">Happy 18th Birthday!! 🎉🎂</div>
+    <div class="age-badge">18 years old 🥳</div>
+    <div class="message-box">
+      <div id="typed-msg"><span class="cursor"></span></div>
+    </div>
+    <div class="subtext">Wishing you an amazing year ahead 💫</div>
+    <div class="floating-emojis">🌸 💕 🌙 ✨ 🎀</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     WEB AUDIO – programmatic sounds
+════════════════════════════════════ -->
+<script>
+// ─────────────────────────────────────
+//  Audio Engine (Web Audio API)
+// ─────────────────────────────────────
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx = null;
+let musicPlaying = false;
+let musicNodes = [];
+
+function getCtx() {
+  if (!ctx) ctx = new AudioCtx();
+  return ctx;
+}
+
+function playTone(freq, type = 'sine', duration = 0.12, gain = 0.18, delay = 0) {
+  try {
+    const ac = getCtx();
+    const osc = ac.createOscillator();
+    const g   = ac.createGain();
+    osc.connect(g); g.connect(ac.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ac.currentTime + delay);
+    g.gain.setValueAtTime(0, ac.currentTime + delay);
+    g.gain.linearRampToValueAtTime(gain, ac.currentTime + delay + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + delay + duration);
+    osc.start(ac.currentTime + delay);
+    osc.stop(ac.currentTime + delay + duration + 0.05);
+  } catch(e) {}
+}
+
+function playFlip()  { playTone(520, 'sine', 0.1, 0.12); }
+function playWrong() { playTone(220, 'triangle', 0.18, 0.15); }
+function playMatch() {
+  [523.25, 659.25, 783.99].forEach((f, i) => playTone(f, 'sine', 0.22, 0.16, i * 0.07));
+}
+function playWin() {
+  const melody = [523, 659, 784, 1047, 784, 1047, 1319];
+  melody.forEach((f, i) => playTone(f, 'sine', 0.35, 0.18, i * 0.13));
+}
+
+// Soft looping background music (simple arpeggios)
+function startMusic() {
+  if (musicPlaying) return;
+  musicPlaying = true;
+  const ac = getCtx();
+  const notes = [261.63, 329.63, 392, 523.25, 392, 329.63];
+  let step = 0;
+  function arp() {
+    if (!musicPlaying) return;
+    const osc = ac.createOscillator();
+    const g   = ac.createGain();
+    osc.connect(g); g.connect(ac.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(notes[step % notes.length], ac.currentTime);
+    g.gain.setValueAtTime(0.06, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.45);
+    osc.start(ac.currentTime);
+    osc.stop(ac.currentTime + 0.5);
+    musicNodes.push(osc);
+    step++;
+    setTimeout(arp, 480);
+  }
+  arp();
+}
+
+function stopMusic() {
+  musicPlaying = false;
+  musicNodes.forEach(n => { try { n.stop(); } catch(e){} });
+  musicNodes = [];
+}
+
+// ─────────────────────────────────────
+//  Background Bubbles
+// ─────────────────────────────────────
+const colors = ['#ff8fab','#c8b6e2','#b5ead7','#ffd166','#a8d8ea'];
+function spawnBubble() {
+  const el = document.createElement('div');
+  el.className = 'bg-bubble';
+  const size = 40 + Math.random() * 100;
+  el.style.cssText = `
+    width:${size}px; height:${size}px;
+    left:${Math.random()*100}vw;
+    background:${colors[Math.floor(Math.random()*colors.length)]};
+    animation-duration:${8 + Math.random()*10}s;
+    animation-delay:${-Math.random()*10}s;
+  `;
+  document.body.appendChild(el);
+}
+for (let i = 0; i < 12; i++) spawnBubble();
+
+// ─────────────────────────────────────
+//  Easter Egg
+// ─────────────────────────────────────
+const easterEgg = document.getElementById('easter-egg');
+easterEgg.addEventListener('click', () => {
+  easterEgg.textContent = '💖';
+  easterEgg.classList.add('bloomed');
+  showToast('You found a secret! 💖');
+  playTone(880, 'sine', 0.3, 0.1);
+  setTimeout(() => easterEgg.classList.remove('bloomed'), 700);
+});
+
+// ─────────────────────────────────────
+//  Toast
+// ─────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ─────────────────────────────────────
+//  Screen Transitions
+// ─────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+// ─────────────────────────────────────
+//  Memory Game Logic
+// ─────────────────────────────────────
+const EMOJIS = ['🌸','🦋','🌙','🌈','🍓','⭐','🐱','🌺'];
+let cards = [], flipped = [], matched = 0, moves = 0, locked = false;
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function buildGrid() {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = '';
+  flipped = []; matched = 0; moves = 0; locked = false;
+  updateStats();
+
+  const pairs = shuffleArray([...EMOJIS, ...EMOJIS]);
+
+  pairs.forEach((emoji, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.emoji = emoji;
+    card.dataset.idx = idx;
+    card.innerHTML = `
+      <div class="card-inner">
+        <div class="card-back"></div>
+        <div class="card-front">${emoji}</div>
+      </div>`;
+    card.addEventListener('click', () => onCardClick(card));
+    grid.appendChild(card);
+    cards.push(card);
+  });
+}
+
+function updateStats() {
+  document.getElementById('moves').textContent   = moves;
+  document.getElementById('matched').textContent = matched;
+}
+
+function onCardClick(card) {
+  if (locked) return;
+  if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  if (flipped.length === 2) return;
+
+  playFlip();
+  card.classList.add('flipped');
+  flipped.push(card);
+
+  if (flipped.length === 2) {
+    moves++;
+    updateStats();
+    checkMatch();
+  }
+}
+
+function checkMatch() {
+  locked = true;
+  const [a, b] = flipped;
+  if (a.dataset.emoji === b.dataset.emoji) {
+    // ✅ Match!
+    setTimeout(() => {
+      a.classList.add('matched'); b.classList.add('matched');
+      playMatch();
+      matched++;
+      updateStats();
+      flipped = [];
+      locked = false;
+      if (matched === 8) setTimeout(triggerWin, 500);
+    }, 350);
+  } else {
+    // ❌ No match
+    setTimeout(() => {
+      playWrong();
+      a.classList.remove('flipped'); b.classList.remove('flipped');
+      flipped = [];
+      locked = false;
+    }, 900);
+  }
+}
+
+// ─────────────────────────────────────
+//  Win Sequence
+// ─────────────────────────────────────
+function triggerWin() {
+  stopMusic();
+  playWin();
+  showScreen('win-screen');
+  setTimeout(launchConfetti, 300);
+  setTimeout(startTyping, 700);
+}
+
+// Confetti burst
+function launchConfetti() {
+  const confettiColors = ['#ff8fab','#ffd166','#c8b6e2','#b5ead7','#ffb347','#a8d8ea','white'];
+  for (let i = 0; i < 120; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      const color = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+      const size  = 6 + Math.random() * 10;
+      const shape = Math.random() > 0.5 ? '50%' : '2px';
+      el.style.cssText = `
+        left: ${Math.random()*100}vw;
+        top: -20px;
+        width: ${size}px;
+        height: ${size}px;
+        border-radius: ${shape};
+        background: ${color};
+        animation-duration: ${2.5 + Math.random()*3}s;
+        animation-delay: ${Math.random()*0.5}s;
+      `;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 6000);
+    }, i * 22);
+  }
+  // Second burst
+  setTimeout(launchConfetti2, 1800);
+}
+function launchConfetti2() {
+  const confettiColors = ['#ff8fab','#ffd166','#c8b6e2','#b5ead7','#ffb347'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.cssText = `
+        left: ${Math.random()*100}vw;
+        top: -20px;
+        width: ${6 + Math.random()*8}px;
+        height: ${6 + Math.random()*8}px;
+        border-radius: 50%;
+        background: ${confettiColors[Math.floor(Math.random()*confettiColors.length)]};
+        animation-duration: ${2 + Math.random()*2.5}s;
+      `;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }, i * 25);
+  }
+}
+
+// Typing effect for birthday message
+const MSG = "ur my friend and i hope u the best 🥹 u deserve every single good thing coming ur way. thanks for existing and being you 💕";
+function startTyping() {
+  const el = document.getElementById('typed-msg');
+  el.innerHTML = '<span class="cursor"></span>';
+  let i = 0;
+  function typeNext() {
+    if (i < MSG.length) {
+      el.innerHTML = MSG.slice(0, ++i) + '<span class="cursor"></span>';
+      setTimeout(typeNext, 38 + Math.random()*25);
+    } else {
+      el.innerHTML = MSG; // remove cursor at end
+    }
+  }
+  typeNext();
+}
+
+// ─────────────────────────────────────
+//  Controls
+// ─────────────────────────────────────
+document.getElementById('start-btn').addEventListener('click', () => {
+  getCtx(); // unlock audio context on user gesture
+  buildGrid();
+  showScreen('game-screen');
+});
+
+document.getElementById('music-btn').addEventListener('click', () => {
+  const btn = document.getElementById('music-btn');
+  if (musicPlaying) {
+    stopMusic();
+    btn.textContent = '🔇';
+    showToast('Music off 🔇');
+  } else {
+    startMusic();
+    btn.textContent = '🎵';
+    showToast('Music on 🎵');
+  }
+});
+</script>
+</body>
+</html>
